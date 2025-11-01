@@ -251,7 +251,7 @@ export default function NoteDetailScreen() {
     const lines = textToRender.split('\n');
     
     return (
-      <>
+      <View>
         {lines.map((line, index) => {
           if (!line.trim()) {
             return <View key={index} style={styles.spacer} />;
@@ -300,7 +300,7 @@ export default function NoteDetailScreen() {
             <View style={styles.typingDot} />
           </View>
         )}
-      </>
+      </View>
     );
   };
 
