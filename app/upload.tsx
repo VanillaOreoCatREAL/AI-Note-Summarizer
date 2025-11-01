@@ -19,12 +19,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function UploadScreen() {
   const { addNote } = useNotes();
   const insets = useSafeAreaInsets();
-  const [selectedFile, setSelectedFile] = useState<{
+  const [selectedFiles, setSelectedFiles] = useState<{
     uri: string;
     name: string;
     type: string;
     mimeType: string;
-  } | null>(null);
+  }[]>([]);
   const [selectedFormat, setSelectedFormat] = useState<NoteFormat>('paragraph');
   const [customInstructions, setCustomInstructions] = useState('');
 
@@ -40,12 +40,15 @@ export default function UploadScreen() {
       }
 
       const file = result.assets[0];
-      setSelectedFile({
-        uri: file.uri,
-        name: file.name,
-        type: 'document',
-        mimeType: file.mimeType || 'application/octet-stream',
-      });
+      setSelectedFiles(prev => [
+        ...prev,
+        {
+          uri: file.uri,
+          name: file.name,
+          type: 'document',
+          mimeType: file.mimeType || 'application/octet-stream',
+        }
+      ]);
     } catch (error) {
       console.error('Error picking document:', error);
       Alert.alert('Error', 'Failed to pick document');
@@ -72,12 +75,15 @@ export default function UploadScreen() {
       }
 
       const photo = result.assets[0];
-      setSelectedFile({
-        uri: photo.uri,
-        name: `photo_${Date.now()}.jpg`,
-        type: 'photo',
-        mimeType: 'image/jpeg',
-      });
+      setSelectedFiles(prev => [
+        ...prev,
+        {
+          uri: photo.uri,
+          name: `photo_${Date.now()}.jpg`,
+          type: 'photo',
+          mimeType: 'image/jpeg',
+        }
+      ]);
     } catch (error) {
       console.error('Error taking photo:', error);
       Alert.alert('Error', 'Failed to take photo');
@@ -97,12 +103,15 @@ export default function UploadScreen() {
       }
 
       const image = result.assets[0];
-      setSelectedFile({
-        uri: image.uri,
-        name: `image_${Date.now()}.jpg`,
-        type: 'image',
-        mimeType: 'image/jpeg',
-      });
+      setSelectedFiles(prev => [
+        ...prev,
+        {
+          uri: image.uri,
+          name: `image_${Date.now()}.jpg`,
+          type: 'image',
+          mimeType: 'image/jpeg',
+        }
+      ]);
     } catch (error) {
       console.error('Error picking image:', error);
       Alert.alert('Error', 'Failed to pick image');
@@ -110,28 +119,35 @@ export default function UploadScreen() {
   };
 
   const handleProcess = async () => {
-    if (!selectedFile) {
-      Alert.alert('No File', 'Please select a file first');
+    if (selectedFiles.length === 0) {
+      Alert.alert('No Files', 'Please select at least one file first');
       return;
     }
 
-    const noteId = Date.now().toString();
-    const note = {
-      id: noteId,
-      title: 'Generating...',
-      content: '',
-      summary: '',
-      format: selectedFormat,
-      sourceFileName: selectedFile.name,
-      sourceType: selectedFile.type,
-      createdAt: new Date().toISOString(),
-      fileUri: selectedFile.uri,
-      fileMimeType: selectedFile.mimeType,
-      customInstructions,
-    };
+    selectedFiles.forEach((file, index) => {
+      setTimeout(() => {
+        const noteId = `${Date.now()}_${index}`;
+        const note = {
+          id: noteId,
+          title: 'Generating...',
+          content: '',
+          summary: '',
+          format: selectedFormat,
+          sourceFileName: file.name,
+          sourceType: file.type,
+          createdAt: new Date().toISOString(),
+          fileUri: file.uri,
+          fileMimeType: file.mimeType,
+          customInstructions,
+        };
 
-    addNote(note as any);
-    router.push(`/note/${noteId}` as any);
+        addNote(note as any);
+        
+        if (index === 0) {
+          router.push(`/note/${noteId}` as any);
+        }
+      }, index * 100);
+    });
   };
 
   return (
@@ -152,7 +168,7 @@ export default function UploadScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Upload Source</Text>
             <Text style={styles.sectionDescription}>
-              Choose a document, photo, or take a picture
+              Choose documents, photos (you can add multiple)
             </Text>
 
             <View style={styles.uploadGrid}>
@@ -185,24 +201,30 @@ export default function UploadScreen() {
               </Pressable>
             </View>
 
-            {selectedFile && (
-              <View style={styles.selectedFileContainer}>
-                <View style={styles.selectedFileIcon}>
-                  {selectedFile.type === 'document' ? (
-                    <FileText size={20} color="#2563EB" strokeWidth={2} />
-                  ) : (
-                    <ImageIcon size={20} color="#10B981" strokeWidth={2} />
-                  )}
-                </View>
-                <View style={styles.selectedFileInfo}>
-                  <Text style={styles.selectedFileName} numberOfLines={1}>
-                    {selectedFile.name}
-                  </Text>
-                  <Text style={styles.selectedFileType}>{selectedFile.type}</Text>
-                </View>
-                <Pressable onPress={() => setSelectedFile(null)}>
-                  <Text style={styles.removeButton}>Remove</Text>
-                </Pressable>
+            {selectedFiles.length > 0 && (
+              <View>
+                {selectedFiles.map((file, index) => (
+                  <View key={index} style={styles.selectedFileContainer}>
+                    <View style={styles.selectedFileIcon}>
+                      {file.type === 'document' ? (
+                        <FileText size={20} color="#2563EB" strokeWidth={2} />
+                      ) : (
+                        <ImageIcon size={20} color="#10B981" strokeWidth={2} />
+                      )}
+                    </View>
+                    <View style={styles.selectedFileInfo}>
+                      <Text style={styles.selectedFileName} numberOfLines={1}>
+                        {file.name}
+                      </Text>
+                      <Text style={styles.selectedFileType}>{file.type}</Text>
+                    </View>
+                    <Pressable onPress={() => {
+                      setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+                    }}>
+                      <Text style={styles.removeButton}>Remove</Text>
+                    </Pressable>
+                  </View>
+                ))}
               </View>
             )}
           </View>
@@ -279,13 +301,17 @@ export default function UploadScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.processButton,
-              !selectedFile && styles.processButtonDisabled,
-              pressed && selectedFile && styles.processButtonPressed,
+              selectedFiles.length === 0 && styles.processButtonDisabled,
+              pressed && selectedFiles.length > 0 && styles.processButtonPressed,
             ]}
             onPress={handleProcess}
-            disabled={!selectedFile}
+            disabled={selectedFiles.length === 0}
           >
-            <Text style={styles.processButtonText}>Generate Notes</Text>
+            <Text style={styles.processButtonText}>
+              {selectedFiles.length === 0 
+                ? 'Generate Notes' 
+                : `Generate ${selectedFiles.length} Note${selectedFiles.length > 1 ? 's' : ''}`}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -366,7 +392,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     borderRadius: 12,
     padding: 16,
-    marginTop: 16,
+    marginTop: 12,
     borderWidth: 1,
     borderColor: '#BFDBFE',
   },

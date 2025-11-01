@@ -95,7 +95,9 @@ export default function NoteDetailScreen() {
         const response = await fetch(note.fileUri);
         content = await response.text();
       } else {
-        content = `Content from ${note.sourceFileName}. (Full text extraction for this file type is limited in this demo.)`;
+        const response = await fetch(note.fileUri);
+        const blob = await response.blob();
+        content = await blob.text();
       }
 
       const formatInstruction = 
@@ -106,12 +108,17 @@ export default function NoteDetailScreen() {
           : 'Write clear, well-organized paragraphs.';
 
       const summaryPrompt = note.customInstructions 
-        ? `${note.customInstructions}\n\n${formatInstruction}\n\nContent:\n${content}`
-        : `Summarize the following content comprehensively. ${formatInstruction}\n\nContent:\n${content}`;
+        ? `${note.customInstructions}\n\n${formatInstruction}\n\nIMPORTANT: Include ALL information from the document. Do not truncate or summarize briefly. Be thorough and comprehensive, capturing every detail, concept, and piece of information present in the content.\n\nContent:\n${content}`
+        : `Create comprehensive, detailed notes from the following content. ${formatInstruction}\n\nIMPORTANT: Include ALL information from the document. Do not truncate or summarize briefly. Be thorough and comprehensive, capturing every detail, concept, example, date, number, and piece of information present. This is not a summary - it should be complete notes that preserve all the information from the original content.\n\nContent:\n${content}`;
 
-      const title = await generateText(
-        `Generate a short, descriptive title (5-8 words max) for these notes. Only return the title, nothing else.`
-      );
+      const title = await generateText({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a short, descriptive title (5-8 words max) for notes about this content: ${content.substring(0, 500)}... Only return the title, nothing else.`
+          }
+        ]
+      });
 
       updateNote(note.id, {
         title: title.trim(),
