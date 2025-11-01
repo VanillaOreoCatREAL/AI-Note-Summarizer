@@ -42,8 +42,14 @@ export const [NotesProvider, useNotes] = createContextHook(() => {
   const addNote = useCallback((note: Note) => {
     setNotes(currentNotes => {
       const updatedNotes = [note, ...currentNotes];
-      AsyncStorage.setItem('notably-notes', JSON.stringify(updatedNotes)).catch(error => {
+      const notesToSave = updatedNotes.map(n => ({
+        ...n,
+        fileUri: undefined,
+        content: n.content && n.content.length > 5000 ? n.content.substring(0, 5000) : n.content,
+      }));
+      AsyncStorage.setItem('notably-notes', JSON.stringify(notesToSave)).catch(error => {
         console.error('Failed to save notes:', error);
+        alert('Storage limit reached. Please delete some notes.');
       });
       return updatedNotes;
     });
@@ -52,7 +58,12 @@ export const [NotesProvider, useNotes] = createContextHook(() => {
   const deleteNote = useCallback((id: string) => {
     setNotes(currentNotes => {
       const updatedNotes = currentNotes.filter(n => n.id !== id);
-      AsyncStorage.setItem('notably-notes', JSON.stringify(updatedNotes)).catch(error => {
+      const notesToSave = updatedNotes.map(n => ({
+        ...n,
+        fileUri: undefined,
+        content: n.content && n.content.length > 5000 ? n.content.substring(0, 5000) : n.content,
+      }));
+      AsyncStorage.setItem('notably-notes', JSON.stringify(notesToSave)).catch(error => {
         console.error('Failed to save notes:', error);
       });
       return updatedNotes;
@@ -64,8 +75,14 @@ export const [NotesProvider, useNotes] = createContextHook(() => {
       const updatedNotes = currentNotes.map(n => 
         n.id === id ? { ...n, ...updates } : n
       );
-      AsyncStorage.setItem('notably-notes', JSON.stringify(updatedNotes)).catch(error => {
+      const notesToSave = updatedNotes.map(n => ({
+        ...n,
+        fileUri: undefined,
+        content: n.content && n.content.length > 5000 ? n.content.substring(0, 5000) : n.content,
+      }));
+      AsyncStorage.setItem('notably-notes', JSON.stringify(notesToSave)).catch(error => {
         console.error('Failed to save notes:', error);
+        alert('Storage limit reached. Please delete some notes.');
       });
       return updatedNotes;
     });
