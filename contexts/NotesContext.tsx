@@ -1,6 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert } from 'react-native';
 
 export type NoteFormat = 'paragraph' | 'bullet-points' | 'outline';
 
@@ -45,11 +46,12 @@ export const [NotesProvider, useNotes] = createContextHook(() => {
       const notesToSave = updatedNotes.map(n => ({
         ...n,
         fileUri: undefined,
-        content: n.content && n.content.length > 5000 ? n.content.substring(0, 5000) : n.content,
+        content: n.content && n.content.length > 2000 ? n.content.substring(0, 2000) : n.content,
+        summary: n.summary && n.summary.length > 10000 ? n.summary.substring(0, 10000) : n.summary,
       }));
       AsyncStorage.setItem('notably-notes', JSON.stringify(notesToSave)).catch(error => {
         console.error('Failed to save notes:', error);
-        alert('Storage limit reached. Please delete some notes.');
+        Alert.alert('Storage Full', 'Storage limit reached. Please delete some old notes to continue.');
       });
       return updatedNotes;
     });
@@ -61,7 +63,8 @@ export const [NotesProvider, useNotes] = createContextHook(() => {
       const notesToSave = updatedNotes.map(n => ({
         ...n,
         fileUri: undefined,
-        content: n.content && n.content.length > 5000 ? n.content.substring(0, 5000) : n.content,
+        content: n.content && n.content.length > 2000 ? n.content.substring(0, 2000) : n.content,
+        summary: n.summary && n.summary.length > 10000 ? n.summary.substring(0, 10000) : n.summary,
       }));
       AsyncStorage.setItem('notably-notes', JSON.stringify(notesToSave)).catch(error => {
         console.error('Failed to save notes:', error);
@@ -78,11 +81,12 @@ export const [NotesProvider, useNotes] = createContextHook(() => {
       const notesToSave = updatedNotes.map(n => ({
         ...n,
         fileUri: undefined,
-        content: n.content && n.content.length > 5000 ? n.content.substring(0, 5000) : n.content,
+        content: n.content && n.content.length > 2000 ? n.content.substring(0, 2000) : n.content,
+        summary: n.summary && n.summary.length > 10000 ? n.summary.substring(0, 10000) : n.summary,
       }));
       AsyncStorage.setItem('notably-notes', JSON.stringify(notesToSave)).catch(error => {
         console.error('Failed to save notes:', error);
-        alert('Storage limit reached. Please delete some notes.');
+        Alert.alert('Storage Full', 'Storage limit reached. Please delete some old notes to continue.');
       });
       return updatedNotes;
     });

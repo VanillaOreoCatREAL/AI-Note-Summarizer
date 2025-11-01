@@ -254,7 +254,7 @@ export default function NoteDetailScreen() {
       <>
         {lines.map((line, index) => {
           if (!line.trim()) {
-            return <View key={index} style={styles.spacer}></View>;
+            return <View key={index} style={styles.spacer} />;
           }
 
           if (line.match(/^#+\s/)) {
